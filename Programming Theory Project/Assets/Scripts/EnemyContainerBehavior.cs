@@ -70,5 +70,9 @@ public class EnemyContainerBehavior : MonoBehaviour
     public void StopMoving()
     {
         StopAllCoroutines();
+        foreach(EnemyBehavior enemyBehavior in gameObject.GetComponentsInChildren<EnemyBehavior>())
+        {
+            enemyBehavior.StopAllCoroutines();
+        }
     }
 }

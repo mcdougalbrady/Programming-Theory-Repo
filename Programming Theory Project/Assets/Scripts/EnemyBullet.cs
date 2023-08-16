@@ -4,8 +4,5 @@ using UnityEngine;
 
 public class EnemyBullet : BulletBehavior
 {
-    void Update()
-    {
-        
-    }
+    
 }
