@@ -2,44 +2,46 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyBehavior : MonoBehaviour
+public class BasicEnemy : MonoBehaviour
 {
-    [SerializeField] int strength = 1;
-    [SerializeField] AudioClip hitSound;
-    [SerializeField] AudioClip dieSound;
-    [SerializeField] AudioClip bulletSound;
-    [SerializeField] Transform bulletOrigin;
-    [SerializeField] GameObject bulletPrefab;
-    [SerializeField] float shotRate = 0.5f;
-    [SerializeField] ParticleSystem explosionParticle;
-    private AudioSource audioSource;
-    private EnemyContainerBehavior container;
-    private GameManager gameManager;
-    public int hitScoreValue = 1;
-    public int killScoreValue = 5;
+    // ENCAPSULATION
+    protected int strength { get; set; }
+    protected float shotRate { get; set; }
+    protected int hitScoreValue { get; set; }
+    protected int killScoreValue { get; set; }
+    protected int shooterProbability { get; set; }
+    [SerializeField] protected AudioClip hitSound;
+    [SerializeField] protected AudioClip dieSound;
+    [SerializeField] protected AudioClip bulletSound;
+    [SerializeField] protected Transform bulletOrigin;
+    [SerializeField] protected GameObject bulletPrefab;
+    [SerializeField] protected ParticleSystem explosionParticle;
+    protected AudioSource audioSource;
+    protected EnemyContainerBehavior container;
+    protected GameManager gameManager;
 
-    private void Start()
+    protected void Initiate()
     {
-        container = GetComponentInParent<EnemyContainerBehavior>();
+        container = GameObject.Find("EnemyContainer").GetComponent<EnemyContainerBehavior>();
         audioSource = GameObject.Find("SFXManager").GetComponent<AudioSource>();
         gameManager = GameObject.Find("Game Manager").GetComponent<GameManager>();
         // Randomly selects whether this enemy will be a shooter (1 in 3 chance)
-        if(Random.Range(0,3) == 1)
+        if (Random.Range(0, shooterProbability) == 1)
         {
             StartCoroutine(RepeatShots());
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    protected void OnTriggerEnter(Collider other)
     {
-        if(other.CompareTag("PlayerBullet"))
+        if (other.CompareTag("PlayerBullet"))
         {
             Destroy(other.gameObject);
             Hit();
         }
         if (other.gameObject.CompareTag("Boundary"))
         {
-            if((other.gameObject.name == "LeftWall" && container.MoveDirection == EnemyContainerBehavior.Direction.Left)
+            if ((other.gameObject.name == "LeftWall" && container.MoveDirection == EnemyContainerBehavior.Direction.Left)
                 || (other.gameObject.name == "RightWall" && container.MoveDirection == EnemyContainerBehavior.Direction.Right))
             {
                 container.SwitchDirection();
@@ -52,33 +54,35 @@ public class EnemyBehavior : MonoBehaviour
         }
     }
 
-    private void Hit()
+    protected void Hit()
     {
         strength--;
-        if(strength == 0)
+        if (strength == 0)
         {
             explosionParticle.Play();
             audioSource.PlayOneShot(dieSound);
             gameManager.updateScore(killScoreValue);
             Destroy(gameObject);
-        } else
+        }
+        else
         {
             gameManager.updateScore(hitScoreValue);
             audioSource.PlayOneShot(hitSound);
         }
     }
 
-    IEnumerator RepeatShots()
+
+    protected IEnumerator RepeatShots()
     {
         yield return new WaitForSeconds(Random.Range(1, 5));
-        while(true)
+        while (true)
         {
             Fire();
             yield return new WaitForSeconds(Random.Range(1, 6) * shotRate);
         }
     }
 
-    private void Fire()
+    protected void Fire()
     {
         Instantiate(bulletPrefab, bulletOrigin.position - new Vector3(0, -0.5f, 0), Quaternion.identity);
         audioSource.PlayOneShot(bulletSound);
