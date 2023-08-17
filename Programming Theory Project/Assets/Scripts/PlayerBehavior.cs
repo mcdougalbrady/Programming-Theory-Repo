@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class PlayerBehavior : MonoBehaviour
 {
@@ -11,9 +12,15 @@ public class PlayerBehavior : MonoBehaviour
     [SerializeField] Transform bulletOrigin;
     [SerializeField] AudioClip laserSound;
     [SerializeField] AudioClip dieSound;
-    [SerializeField] ParticleSystem particle;
+    [SerializeField] AudioClip powerUpSound;
+    [SerializeField] ParticleSystem explosionParticle;
+    [SerializeField] ParticleSystem powerUpParticle;
+    [SerializeField] TextMeshProUGUI powerUpCountText;
     private AudioSource audioSource;
     private GameManager gameManager;
+    public bool hasPowerUp = false;
+    private int powerUpCount = 1;
+    private bool isAlive = true;
 
     private void Start()
     {
@@ -32,6 +39,13 @@ public class PlayerBehavior : MonoBehaviour
         {
             FireBullet();
         }
+        if(Input.GetKeyDown(KeyCode.G))
+        {
+            if(powerUpCount > 0)
+            {
+                PowerUp();
+            }
+        }
     }
 
     private void FireBullet()
@@ -47,7 +61,7 @@ public class PlayerBehavior : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.CompareTag("EnemyBullet"))
+        if(isAlive && other.gameObject.CompareTag("EnemyBullet"))
         {
             PlayerHit();
         }
@@ -56,9 +70,10 @@ public class PlayerBehavior : MonoBehaviour
     public void PlayerHit()
     {
         audioSource.PlayOneShot(dieSound);
-        particle.Play();
+        explosionParticle.Play();
         SetVisible(false);
         gameManager.GameOver();
+        isAlive = false;
     }
 
     private void SetVisible(bool isVisible)
@@ -77,5 +92,27 @@ public class PlayerBehavior : MonoBehaviour
                 m.enabled = false;
             }
         }
+    }
+
+    private void PowerUp()
+    {
+        powerUpCount--;
+        updatePowerUpCountDisplay();
+        audioSource.PlayOneShot(powerUpSound);
+        powerUpParticle.Play();
+        hasPowerUp = true;
+        StartCoroutine(PowerUpCountdown());
+    }
+
+    private void updatePowerUpCountDisplay()
+    {
+        powerUpCountText.text = "Power Ups: " + powerUpCount;
+    }
+
+    IEnumerator PowerUpCountdown()
+    {
+        yield return new WaitForSeconds(5.0f);
+        hasPowerUp = false;
+        powerUpParticle.Stop();
     }
 }

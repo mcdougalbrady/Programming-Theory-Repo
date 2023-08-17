@@ -19,12 +19,14 @@ public class BasicEnemy : MonoBehaviour
     protected AudioSource audioSource;
     protected EnemyContainerBehavior container;
     protected GameManager gameManager;
+    private PlayerBehavior player;
 
     protected void Initiate()
     {
         container = GameObject.Find("EnemyContainer").GetComponent<EnemyContainerBehavior>();
         audioSource = GameObject.Find("SFXManager").GetComponent<AudioSource>();
         gameManager = GameObject.Find("Game Manager").GetComponent<GameManager>();
+        player = GameObject.Find("Player").GetComponent<PlayerBehavior>();
         // Randomly selects whether this enemy will be a shooter (1 in 3 chance)
         if (Random.Range(0, shooterProbability) == 1)
         {
@@ -37,7 +39,7 @@ public class BasicEnemy : MonoBehaviour
         if (other.CompareTag("PlayerBullet"))
         {
             Destroy(other.gameObject);
-            Hit();
+            Hit(other.gameObject.GetComponent<PlayerBullet>().strength);
         }
         if (other.gameObject.CompareTag("Boundary"))
         {
@@ -54,14 +56,21 @@ public class BasicEnemy : MonoBehaviour
         }
     }
 
-    protected void Hit()
+    protected void Hit(int damage)
     {
-        strength--;
-        if (strength == 0)
+        if(player.hasPowerUp)
+        {
+            strength -= (damage * 2);
+        } else
+        {
+            strength -= damage;
+        }
+        if (strength <= 0)
         {
             explosionParticle.Play();
             audioSource.PlayOneShot(dieSound);
             gameManager.updateScore(killScoreValue);
+            gameManager.DeductEnemyCount();
             Destroy(gameObject);
         }
         else
@@ -77,7 +86,10 @@ public class BasicEnemy : MonoBehaviour
         yield return new WaitForSeconds(Random.Range(1, 5));
         while (true)
         {
-            Fire();
+            if(!player.hasPowerUp && !gameManager.gameOver)
+            {
+                Fire();
+            }
             yield return new WaitForSeconds(Random.Range(1, 6) * shotRate);
         }
     }
